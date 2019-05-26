@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+  <head>
+  <style>
+  html {
+    background-color: #444;
+  }
+  body {
+    margin: 128px auto;
+    text-align: center;
+  }
+  .board {
+    display: inline-table;
+    border-collapse: separate;
+    border-spacing: 4px;
+    border-color: grey;
+    background-color: black;
+    border-radius: 4px;
+    box-shadow: 8px 8px 32px rgba(0,0,0,.75);
+    font-family: monospace;
+    color: #666;
+    font-size: 20px;
+    cursor: default;
+  }
+  #right {
+    margin-left: 48px;
+  }
+  .key {
+    width: 64px;
+    height: 64px;
+    background-color: #222;
+    box-shadow: inset 0 0 16px #000;
+  }
+  .key:hover {
+    background-color: #333;
+    color: #777;
+  }
+  </style>
+  </head>
+  <body>
+  <script>
+
+/* Qwerty
+ * ,-----------------------------------------------------------------------------------.
+ * | Tab  |   Q  |   W  |   E  |   R  |   T  |   Y  |   U  |   I  |   O  |   P  | Bksp |
+ * |------+------+------+------+------+-------------+------+------+------+------+------|
+ * | Esc  |   A  |   S  |   D  |   F  |   G  |   H  |   J  |   K  |   L  |   ;  |  "   |
+ * |------+------+------+------+------+------|------+------+------+------+------+------|
+ * | Shift|   Z  |   X  |   C  |   V  |   B  |   N  |   M  |   ,  |   .  |   /  |Enter |
+ * |------+------+------+------+------+------+------+------+------+------+------+------|
+ * |Adjust| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+ * `-----------------------------------------------------------------------------------'
+ */
+
+  // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
+/*
+  layout = [
+   KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSPC,
+   KC_ESC,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
+   KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_ENT ,
+   ADJUST,  KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT
+  ];
+*/
+  function buildPart(label) {
+    const table = document.createElement('table');
+    const W = 6;
+    const H = 4;
+    
+    window.letsplit = window.letsplit || [];
+    
+    for (let y = 0; y < H; ++y) {
+      const tr = document.createElement('tr');
+      for (let x = 0; x < W; ++x) {
+        const index = y * 12 + (x + (label == "left" ? 0 : 6));
+        const td = document.createElement('td');
+        td.setAttribute('class', 'key');
+        td.setAttribute('id', index);
+        td.innerText = 'A';
+        td.onclick = function(event) {
+          console.log(this.getAttribute('id') + ' clicked');
+        }.bind(td);
+        tr.append(td);
+        window.letsplit[index] = td;
+      }
+      table.append(tr)
+    }
+    
+    table.setAttribute('class', 'board');
+    table.setAttribute('id', label);
+    
+    return table;
+  }
+
+  left = buildPart("left");
+  right = buildPart("right");
+  
+  document.body.append(left);
+  document.body.append(right);
+  
+  </script>
+  </body>
+</html>
