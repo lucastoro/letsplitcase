@@ -40,19 +40,9 @@
   <body>
   <script>
 
-/* Qwerty
- * ,-----------------------------------------------------------------------------------.
- * | Tab  |   Q  |   W  |   E  |   R  |   T  |   Y  |   U  |   I  |   O  |   P  | Bksp |
- * |------+------+------+------+------+-------------+------+------+------+------+------|
- * | Esc  |   A  |   S  |   D  |   F  |   G  |   H  |   J  |   K  |   L  |   ;  |  "   |
- * |------+------+------+------+------+------|------+------+------+------+------+------|
- * | Shift|   Z  |   X  |   C  |   V  |   B  |   N  |   M  |   ,  |   .  |   /  |Enter |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * |Adjust| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
- * `-----------------------------------------------------------------------------------'
- */
-
   // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
+
+  // here we define some macro to ease the binding between QMK and this shit
 
   const KC_TAB = "TAB";
   const KC_ESC = "ESC";
@@ -76,59 +66,106 @@
   const LOWER = "LOWER"; // ???
   const ADJUST = "ADJUST"; // ???
 
-  const A = 'A'.charCodeAt(0)
-  const Z = 'Z'.charCodeAt(0)
-
-  for (let c = A; c != Z + 1; ++c) {
+  for (let c = 'A'.charCodeAt(0); c != 'Z'.charCodeAt(0) + 1; ++c) {
     const k = String.fromCharCode(c);
     window['KC_' + k] = k;
   }
 
-  layout = [
-   KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSPC,
-   KC_ESC,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
-   KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_ENT ,
-   ADJUST,  KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT
-  ];
+  // the keyboard is represented in the DOM as a pair of <table>, while the JS instance
+  // is a singleton named 'letsplit'.
+  // the global object representing the keyboard is an array of keys, left to right, up to bottom.
+  // keys are just <td> elements with some additional method and attribute (such as .value, .index)
+  window.letsplit = [];
 
+  // let's encapsulate the layout configuration inside the keyboard itself
+  window.letsplit.setLayout = function(layout) {
+    this.forEach(function(key){
+     key.value = layout[key.index];
+    });
+  };
+
+  // the global handler for the onClick() event for keys
+  function keyClicked(key) {
+    console.log(key.index + " (" + key.value + ")" + " clicked");
+  }
+
+  /// build one "part" or "side" of the board
+  /// @param label: string "left" or "right"
+  /// @return a <table> representing that side of the keyboard
   function buildPart(label) {
-    const table = document.createElement('table');
     const W = 6;
     const H = 4;
     
-    window.letsplit = window.letsplit || [];
+    const table = document.createElement('table');
+    table.setAttribute('class', 'board');
+    table.setAttribute('id', label);
     
     for (let y = 0; y < H; ++y) {
+
       const tr = document.createElement('tr');
+
       for (let x = 0; x < W; ++x) {
-        const index = y * 12 + (x + (label == "left" ? 0 : 6));
-        const car = layout[index];
+
         const td = document.createElement('td');
+
+        // index is the ordinal index inside the board, starting from zero
+        Object.defineProperty(td, 'index', {
+          get: function() { return this.getAttribute('id'); },
+          set: function(v) { this.setAttribute('id', v); }
+        });
+
+        // value is the string associated to that key ("A", "2", "SPACE"...)
+        Object.defineProperty(td, 'value', {
+          get: function() { return this.innerText; },
+          set: function(v) {
+            this.innerText = v;
+            this.style.fontSize = Math.max(8, (24 - v.length * 2)) + 'px';
+          }
+        });
+
+        const index = y * 12 + (x + (label == "left" ? 0 : 6));
         td.setAttribute('class', 'key');
         td.setAttribute('id', index);
-        td.innerText = car;
-        td.style.fontSize = Math.max(8, (24 - car.length * 2)) + 'px';
-        td.onclick = function(event) {
-          console.log(this.getAttribute('id') + ' clicked');
-        }.bind(td);
+        td.onclick = function(ev) { keyClicked(ev.target); };
         tr.append(td);
         window.letsplit[index] = td;
       }
       table.append(tr)
     }
     
-    table.setAttribute('class', 'board');
-    table.setAttribute('id', label);
-    
     return table;
   }
 
-  left = buildPart("left");
-  right = buildPart("right");
-  
-  document.body.append(left);
-  document.body.append(right);
-  
+  /// build both sides of the keyboard and attach them to the document
+  /// @return the singleton keyboard
+  function buildKeyboard() {
+    document.body.append(buildPart("left"));
+    document.body.append(buildPart("right"));
+    return window.letsplit;
+  }
+
+/* Qwerty
+ * ,-----------------------------------------------------------------------------------.
+ * | Tab  |   Q  |   W  |   E  |   R  |   T  |   Y  |   U  |   I  |   O  |   P  | Bksp |
+ * |------+------+------+------+------+-------------+------+------+------+------+------|
+ * | Esc  |   A  |   S  |   D  |   F  |   G  |   H  |   J  |   K  |   L  |   ;  |  "   |
+ * |------+------+------+------+------+------|------+------+------+------+------+------|
+ * | Shift|   Z  |   X  |   C  |   V  |   B  |   N  |   M  |   ,  |   .  |   /  |Enter |
+ * |------+------+------+------+------+------+------+------+------+------+------+------|
+ * |Adjust| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
+ * `-----------------------------------------------------------------------------------'
+ */
+
+  layout = [
+    KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSPC,
+    KC_ESC,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
+    KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_ENT ,
+    ADJUST,  KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT
+  ];
+
+  const keyboard = buildKeyboard();
+  keyboard.setLayout(layout); 
+
   </script>
   </body>
 </html>
