@@ -53,14 +53,44 @@
  */
 
   // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
-/*
+
+  const KC_TAB = "TAB";
+  const KC_ESC = "ESC";
+  const KC_LSFT = "L SHIFT";
+  const KC_COMM = ",";
+  const KC_DOT = ".";
+  const KC_SCLN = ";";
+  const KC_SLSH = "/";
+  const KC_UP = "IP";
+  const KC_DOWN = "DOWN";
+  const KC_LEFT = "LEFT";
+  const KC_RGHT = "RIGHT";
+  const KC_ENT = "ENTER";
+  const KC_QUOT = "'";
+  const KC_BSPC = "B.SPACE";
+  const KC_LCTL = "L CTRL";
+  const KC_LALT = "L ALT";
+  const KC_LGUI = "L GUI"; // ???
+  const KC_SPC = "SPACE";
+  const RAISE = "RAISE"; // ???
+  const LOWER = "LOWER"; // ???
+  const ADJUST = "ADJUST"; // ???
+
+  const A = 'A'.charCodeAt(0)
+  const Z = 'Z'.charCodeAt(0)
+
+  for (let c = A; c != Z + 1; ++c) {
+    const k = String.fromCharCode(c);
+    window['KC_' + k] = k;
+  }
+
   layout = [
    KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSPC,
    KC_ESC,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
    KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_ENT ,
    ADJUST,  KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT
   ];
-*/
+
   function buildPart(label) {
     const table = document.createElement('table');
     const W = 6;
@@ -72,10 +102,12 @@
       const tr = document.createElement('tr');
       for (let x = 0; x < W; ++x) {
         const index = y * 12 + (x + (label == "left" ? 0 : 6));
+        const car = layout[index];
         const td = document.createElement('td');
         td.setAttribute('class', 'key');
         td.setAttribute('id', index);
-        td.innerText = 'A';
+        td.innerText = car;
+        td.style.fontSize = Math.max(8, (24 - car.length * 2)) + 'px';
         td.onclick = function(event) {
           console.log(this.getAttribute('id') + ' clicked');
         }.bind(td);
